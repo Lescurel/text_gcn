@@ -1,0 +1,10 @@
+name: text_gcn
+channels:
+  - defaults
+dependencies:
+  - networkx=2.2
+  - nltk=3.4
+  - python=3.6.8
+  - scikit-learn=0.20.2
+  - tensorflow=1.12.0
+
