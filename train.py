@@ -8,13 +8,14 @@ from sklearn import metrics
 from utils import *
 from models import GCN, MLP
 import random
+import datetime
 import os
 import sys
 
 if len(sys.argv) != 2:
 	sys.exit("Use: python train.py <dataset>")
 
-datasets = ['20ng', 'R8', 'R52', 'ohsumed', 'mr']
+datasets = ['20ng', 'R8', 'R52', 'ohsumed', 'mr', 'rr']
 dataset = sys.argv[1]
 
 if dataset not in datasets:
@@ -48,15 +49,21 @@ flags.DEFINE_integer('max_degree', 3, 'Maximum Chebyshev polynomial degree.')
 # Load data
 adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask, train_size, test_size = load_corpus(
     FLAGS.dataset)
-print(adj)
+# print(adj)
 # print(adj[0], adj[1])
 features = sp.identity(features.shape[0])  # featureless
 
 print(adj.shape)
 print(features.shape)
+from pprint import pprint
+pprint(features.diagonal)
+
 
 # Some preprocessing
 features = preprocess_features(features)
+print(features)
+sys.exit()
+
 if FLAGS.model == 'gcn':
     support = [preprocess_adj(adj)]
     num_supports = 1
@@ -87,6 +94,10 @@ placeholders = {
 print(features[2][1])
 model = model_func(placeholders, input_dim=features[2][1], logging=True)
 
+# Create a Saver
+saver = tf.train.Saver()
+
+
 # Initialize session
 session_conf = tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))
 sess = tf.Session(config=session_conf)
@@ -100,6 +111,11 @@ def evaluate(features, support, labels, mask, placeholders):
     outs_val = sess.run([model.loss, model.accuracy, model.pred, model.labels], feed_dict=feed_dict_val)
     return outs_val[0], outs_val[1], outs_val[2], outs_val[3], (time.time() - t_test)
 
+
+
+# Write Logs into a summary_writer
+merged = tf.summary.merge_all()
+train_writer = tf.summary.FileWriter('./logs', sess.graph)
 
 # Init variables
 sess.run(tf.global_variables_initializer())
@@ -134,6 +150,19 @@ for epoch in range(FLAGS.epochs):
         break
 
 print("Optimization Finished!")
+
+print("Saving the model :")
+training_dir = "./training_results"
+now = datetime.datetime.now()
+training_dir = os.path.join(training_dir, now.strftime("%Y_%m_%d-%H%M"))
+os.makedirs(training_dir)
+model_name = "gcn_{}".format(dataset)
+model_path = os.path.join(training_dir, model_name)
+# Save model weights to disk
+save_path = saver.save(sess, model_path, global_step=epoch)
+print("Model saved in file: {}".format(save_path))
+
+
 
 # Testing
 test_cost, test_acc, pred, labels, test_duration = evaluate(
