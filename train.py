@@ -12,14 +12,14 @@ import datetime
 import os
 import sys
 
-if len(sys.argv) != 2:
-	sys.exit("Use: python train.py <dataset>")
+# if len(sys.argv) != 2:
+# 	sys.exit("Use: python train.py <dataset>")
 
-datasets = ['20ng', 'R8', 'R52', 'ohsumed', 'mr', 'rr']
-dataset = sys.argv[1]
+# datasets = ['20ng', 'R8', 'R52', 'ohsumed', 'mr', 'rr']
+# dataset = sys.argv[1]
 
-if dataset not in datasets:
-	sys.exit("wrong dataset name")
+# if dataset not in datasets:
+# 	sys.exit("wrong dataset name")
 
 
 # Set random seed
@@ -33,7 +33,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = ""
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 # 'cora', 'citeseer', 'pubmed'
-flags.DEFINE_string('dataset', dataset, 'Dataset string.')
+flags.DEFINE_string('dataset', 'rr', 'Dataset string.')
 # 'gcn', 'gcn_cheby', 'dense'
 flags.DEFINE_string('model', 'gcn', 'Model string.')
 flags.DEFINE_float('learning_rate', 0.02, 'Initial learning rate.')
@@ -46,23 +46,22 @@ flags.DEFINE_integer('early_stopping', 10,
                      'Tolerance for early stopping (# of epochs).')
 flags.DEFINE_integer('max_degree', 3, 'Maximum Chebyshev polynomial degree.')
 
+FLAGS.dataset = 'rr'
+
 # Load data
 adj, features, y_train, y_val, y_test, train_mask, val_mask, test_mask, train_size, test_size = load_corpus(
     FLAGS.dataset)
 # print(adj)
 # print(adj[0], adj[1])
-features = sp.identity(features.shape[0])  # featureless
+# features = sp.identity(features.shape[0])  # featureless
 
 print(adj.shape)
 print(features.shape)
-from pprint import pprint
-pprint(features.diagonal)
-
+# from pprint import pprint
+# pprint(features.diagonal)
 
 # Some preprocessing
 features = preprocess_features(features)
-print(features)
-sys.exit()
 
 if FLAGS.model == 'gcn':
     support = [preprocess_adj(adj)]
@@ -185,48 +184,48 @@ print(metrics.precision_recall_fscore_support(test_labels, test_pred, average='m
 print("Micro average Test Precision, Recall and F1-Score...")
 print(metrics.precision_recall_fscore_support(test_labels, test_pred, average='micro'))
 
-# doc and word embeddings
-print('embeddings:')
-word_embeddings = outs[3][train_size: adj.shape[0] - test_size]
-train_doc_embeddings = outs[3][:train_size]  # include val docs
-test_doc_embeddings = outs[3][adj.shape[0] - test_size:]
+# # doc and word embeddings
+# print('embeddings:')
+# word_embeddings = outs[3][train_size: adj.shape[0] - test_size]
+# train_doc_embeddings = outs[3][:train_size]  # include val docs
+# test_doc_embeddings = outs[3][adj.shape[0] - test_size:]
 
-print(len(word_embeddings), len(train_doc_embeddings),
-      len(test_doc_embeddings))
-print(word_embeddings)
+# print(len(word_embeddings), len(train_doc_embeddings),
+#       len(test_doc_embeddings))
+# print(word_embeddings)
 
-f = open('data/corpus/' + dataset + '_vocab.txt', 'r')
-words = f.readlines()
-f.close()
+# f = open('data/corpus/' + dataset + '_vocab.txt', 'r')
+# words = f.readlines()
+# f.close()
 
-vocab_size = len(words)
-word_vectors = []
-for i in range(vocab_size):
-    word = words[i].strip()
-    word_vector = word_embeddings[i]
-    word_vector_str = ' '.join([str(x) for x in word_vector])
-    word_vectors.append(word + ' ' + word_vector_str)
+# vocab_size = len(words)
+# word_vectors = []
+# for i in range(vocab_size):
+#     word = words[i].strip()
+#     word_vector = word_embeddings[i]
+#     word_vector_str = ' '.join([str(x) for x in word_vector])
+#     word_vectors.append(word + ' ' + word_vector_str)
 
-word_embeddings_str = '\n'.join(word_vectors)
-f = open('data/' + dataset + '_word_vectors.txt', 'w')
-f.write(word_embeddings_str)
-f.close()
+# word_embeddings_str = '\n'.join(word_vectors)
+# f = open('data/' + dataset + '_word_vectors.txt', 'w')
+# f.write(word_embeddings_str)
+# f.close()
 
-doc_vectors = []
-doc_id = 0
-for i in range(train_size):
-    doc_vector = train_doc_embeddings[i]
-    doc_vector_str = ' '.join([str(x) for x in doc_vector])
-    doc_vectors.append('doc_' + str(doc_id) + ' ' + doc_vector_str)
-    doc_id += 1
+# doc_vectors = []
+# doc_id = 0
+# for i in range(train_size):
+#     doc_vector = train_doc_embeddings[i]
+#     doc_vector_str = ' '.join([str(x) for x in doc_vector])
+#     doc_vectors.append('doc_' + str(doc_id) + ' ' + doc_vector_str)
+#     doc_id += 1
 
-for i in range(test_size):
-    doc_vector = test_doc_embeddings[i]
-    doc_vector_str = ' '.join([str(x) for x in doc_vector])
-    doc_vectors.append('doc_' + str(doc_id) + ' ' + doc_vector_str)
-    doc_id += 1
+# for i in range(test_size):
+#     doc_vector = test_doc_embeddings[i]
+#     doc_vector_str = ' '.join([str(x) for x in doc_vector])
+#     doc_vectors.append('doc_' + str(doc_id) + ' ' + doc_vector_str)
+#     doc_id += 1
 
-doc_embeddings_str = '\n'.join(doc_vectors)
-f = open('data/' + dataset + '_doc_vectors.txt', 'w')
-f.write(doc_embeddings_str)
-f.close()
+# doc_embeddings_str = '\n'.join(doc_vectors)
+# f = open('data/' + dataset + '_doc_vectors.txt', 'w')
+# f.write(doc_embeddings_str)
+# f.close()
